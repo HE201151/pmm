@@ -50,12 +50,14 @@
 
 
 <?php
+$bdd = coBdd();
 	// si demande de nouveau mdp
 	if (!empty($_POST['newpass'])){
 		// si les deux pass sont égaux
 		if ($_POST['newpass'] == $_POST['confpass']) {
-			$bdd = coBdd();
-			$mdp = sha1($_POST['newpass']);
+			
+			$mdp = hash('sha256', $_POST['newpass']);
+			//$mdp = sha1($_POST['newpass']);
 			//$mdp = $_POST['newpass'];
 			$id = $_SESSION['id'];
 			$cle = $_GET['cle'];
@@ -87,13 +89,13 @@
 		//deux mdpass diffèrent
 		else{
 			echo '<div class="wrong_log">  Erreur lors du changement de mot de passe: les deux mots de passe ne correspondent pas. </div>';
-			afficheNewPass();
+			afficheNewPass($bdd);
 		}
 	}
 	//Si question secrète
 	else{
 		if (isset($_POST['reponse'])) {
-			$bdd = coBdd();
+			
 			$cle = $_GET['cle'];
 
 			$requete1 = $bdd->query('SELECT userid, activationCode FROM activations WHERE (activationCode)= \'' . $cle . '\'');
@@ -105,7 +107,8 @@
 			$donnePseudo = strtolower($donnee['pseudo']);
 			$postPseudo = strtolower($_POST['pseudo']);
 			$_SESSION['id']=$donnee['userid'];
-			$reponse = sha1($_POST['reponse']);
+			$reponse = hash('sha256', $_POST['reponse']);
+			//$reponse = sha1($_POST['reponse']);
 			//si pseudo correcte
 			if ($donnePseudo==$postPseudo) {
 				//si réponse correcte
@@ -114,26 +117,26 @@
 				}
 				else{
 					echo"<div class='wrong_log'>Réponse inccorecte</div></br>";
-					initMdp();
+					initMdp($bdd);
 				}
 			}
 			else{
 				echo "<div class='wrong_log'>Pseudo inccorect</div></br>";
-				initMdp();
+				initMdp($bdd);
 			}
 		}
 		else{
 			// si demande d'activation de compte ou newmail
 			if (isset($_GET['log'])) {
 			 	if (isset($_GET['cle'])) {
-			 		activation();
+			 		activation($bdd);
 			 	} 
 			 	else{
 			 		echo "<div class='wrong_log'>Erreur : clé manquante</div>";
 			 	}
 			 }
 			 else{
-			 	initMdp();
+			 	initMdp($bdd);
 			 } 
 		}
 	}

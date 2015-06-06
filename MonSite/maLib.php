@@ -9,6 +9,7 @@
 function creeMenu(){
 	echo '<ul><li><a href="Index.php">Index</a></li>';
 	echo '<li><a href="normale.php">Normale</a></li>';
+	echo '<li><a href="wikis.php">Wikis</a></li>';
 	
 	if(isset($_SESSION['login'])){		
 		echo '<li><a href="User.php">Profil</a></li>';
@@ -59,7 +60,7 @@ function connexion(){
 }
 
 
-function login(){
+function login($bdd){
 if (!isset($_POST['pseudo']) || !isset($_POST['pass'])) {
 	//echo "<script>alert('pseudo ou MDP incomplet')</script>";
 	//header ('location: index.php?userChoice=CreateAcc');
@@ -82,7 +83,7 @@ else{
 	//echo "<script>alert('pseudo et mdp rempli ok')</script>";
 	$pseudo=$_POST['pseudo'];
 	$password=$_POST['pass'];
-	$bdd=coBdd();
+	
 
 	//$requete = $bdd->query('SELECT userid, pseudo, userpwd, usermail, etat FROM tbuser WHERE (pseudo)= \'' . $_POST['pseudo'] . '\'');
 	$peudo=$_POST['pseudo'];
@@ -94,10 +95,14 @@ else{
 
 			$donnee = $requete->fetch();
 			//echo '<pre>'.print_r($donnee['password'],1).'</pre>';
-				$password=sha1($password);
+				$password = hash('sha256', $password);
+				//$password=sha1($password);
 				if($donnee['userpwd'] == $password){
 					if($donnee['profil_id'] == 4){
 						return 2;
+					}
+					if($donnee['profil_id'] == 9){
+						return 9;
 					}
 			
 					$_SESSION['mail']=$donnee['usermail'];
@@ -110,6 +115,10 @@ else{
 					if($donnee['profil_id'] == 10){
 						return 33;
 					}
+
+
+
+
 
 
 					if($donnee['profil_id'] == 1){
@@ -240,7 +249,8 @@ function signup(){
 					$mysqldate = date( 'Y-m-d H:i:s', $phpdate ); */
 					$mysqldate = date("Y-m-d H:i:s",time()); 
 					$cle = md5(microtime(TRUE)*100000);
-					$password=sha1($password);
+					$password = hash('sha256', $password);
+					//$password=sha1($password);
 					$sql ="INSERT INTO `1415he201151`.`tbuser` (`pseudo`, `userpwd`, `usermail` , `userdateinscription`) 
 											VALUES('$pseudo', '$password', '$mail', '$mysqldate')";
 											$bdd->exec($sql);
@@ -309,8 +319,8 @@ function signup(){
 	return 0;
 }
 
-function activation(){
-	$bdd = coBdd();
+function activation($bdd){
+	
 	// Récupération des variables nécessaires à l'activation
 	$login = $_GET['log'];
 	$cle = $_GET['cle'];
@@ -347,6 +357,7 @@ function activation(){
 				$_SESSION['isadmin']='ok';
 				$_SESSION['mail']=$donnee['usermail'];
 				$_SESSION['id']=$donnee['userid'];
+				$_SESSION['profilComplet']='ok';
 				$requete=  $bdd->query('UPDATE `1415he201151`.`user_profil` SET `profil_id`="1" WHERE `user_id`=\'' . $donnee['userid'] . '\'');
 				//$requete=  $bdd->query('UPDATE `1415he201151`.`tbuser` SET `cle`="0" WHERE `pseudo`=\'' . $login . '\'');
 				$requete=  $bdd->query('DELETE FROM `1415he201151`.`activations` WHERE `userid`=\'' . $donnee['userid'] . '\'');
@@ -374,8 +385,8 @@ function activation(){
 	$requete->closeCursor();	
 }
 
-function initMdp(){
-	$bdd = coBdd();
+function initMdp($bdd){
+	
 	$cle = $_GET['cle'];
 	/*
 	$requete = $bdd->query('SELECT pseudo, userpwd, usermail, question, reponse FROM tbuser WHERE (cle)= \'' . $cle . '\'');
@@ -388,7 +399,7 @@ function initMdp(){
 	$donnee = $requete->fetch();
 
 	if($cle == $donnee1['activationCode']){
-		echo '	<form method="post" action="MonSite/validation.php?cle='.urlencode($cle).'">
+		echo '	<form method="post" action="validation.php?cle='.urlencode($cle).'">
 				<label for="pseudo"> Pseudo :</label>';
 		if (!empty($_POST['pseudo'])){
 	        $pseudo=$_POST['pseudo'];
@@ -413,10 +424,11 @@ function initMdp(){
 	$requete->closeCursor();
 }
 
-function newPass(){
+function newPass($bdd){
 	if ($_POST['newpass'] == $_POST['confpass']) {
-		$bdd = coBdd();
-		$mdp = sha1($_POST['newpass']);
+		
+		$mdp = hash('sha256', $_POST['newpass']);
+		//$mdp = sha1($_POST['newpass']);
 		$id = $_SESSION['id'];
 		$requete=  $bdd->query("UPDATE `1415he201151`.`tbuser` SET `userpwd`='$mdp' WHERE `userid`='$id' ");
 		echo '<div class="wrong_log"> Mot de passe modifié </div> ';
@@ -442,10 +454,10 @@ function afficheNewPass(){
 	echo '<input type="submit" value="Valider"/> </div>';
 }
 
-function newMail(){
+function newMail($bdd){
 	if (!empty($_POST['mail'])){
 		if ($_POST['mail']==$_POST['confmail']) {
-			$bdd = coBdd();
+			
 			$mail = $_POST['mail'];
 			$requete = $bdd->query('SELECT pseudo, userpwd, usermail FROM tbuser WHERE (usermail)= \'' . $_POST['mail'] . '\'');
 			$donnee = $requete->fetch();
@@ -479,7 +491,25 @@ function newMail(){
 					Pour activer votre nouvelle adresse mail, veuillez cliquer sur le lien ci dessous
 					ou copier/coller dans votre navigateur internet.
 					 
-					http://193.190.65.94/he201151/TRAV/5_site_core/validation.php?log='.urlencode($pseudo).'&cle='.urlencode($cle).'
+										http';
+					if ($_SERVER['HTTPS']=='on') {
+						$message=$message.'s';
+					}
+					else {
+						//$message=$message.'no';
+					}
+
+					
+					$serverName=$_SERVER['SERVER_NAME'];
+					$path=$_SERVER['PHP_SELF'];
+					$nb=substr_count($path, '/');
+					$list=explode('/', $path);
+					$message=$message.'://';
+					$chemin=$list[0].'/';
+					for ($i=1; $i <$nb ; $i++) { 
+						$chemin=$chemin.$list[$i].'/';
+					}
+					$message=$message.$serverName.$chemin.'/validation.php?log='.urlencode($pseudo).'&cle='.urlencode($cle).'
 					 
 					 
 					---------------
@@ -503,10 +533,11 @@ function newMail(){
 	}
 }
 
-function completeProfil(){
-	$bdd = coBdd();
+function completeProfil($bdd){
+	
 	$id = $_SESSION['id'];
-	$reponse = sha1($_POST['reponse']);
+	$reponse = hash('sha256', $_POST['reponse']);
+	//$reponse = sha1($_POST['reponse']);
 	$question =  $_POST['question'];
 	$requete=  $bdd->query("UPDATE `1415he201151`.`tbuser` SET `question`='$question' WHERE `userid`='$id' ");
 	$requete=  $bdd->query("UPDATE `1415he201151`.`tbuser` SET `reponse`='$reponse' WHERE `userid`='$id' ");
@@ -530,8 +561,8 @@ function menuAdmin(){
 	echo '</ul>';
 }
 
-function afficheTbUser(){
-	$bdd = coBdd();
+function afficheTbUser($bdd){
+	
 	$requete = $bdd->query('SELECT * FROM tbuser INNER JOIN user_profil ON tbuser.userid=user_profil.user_id ');
 	echo '<table>';
 		echo '<tr>';
@@ -575,8 +606,8 @@ function formRecherche(){
 		echo '<p> <input type="submit" value="Valider"/> ';
 }
 
-function recherche(){
-	$bdd = coBdd();
+function recherche($bdd){
+	
 	/*
 	if (!empty($_POST['rechLogin'])) {
 		if (!empty($_POST['rechMail'])) {
@@ -705,8 +736,8 @@ function recherche(){
 }
 
 
-function modifUSer(){
-	$bdd=coBdd();
+function modifUSer($bdd){
+	
 	$requete = $bdd->query('SELECT * FROM tbuser INNER JOIN user_profil 
 								ON tbuser.userid=user_profil.user_id 
 								AND tbuser.userid =\''.$_GET['id'].'\'
@@ -744,8 +775,8 @@ function modifUSer(){
 
 }
 
-function sendMail(){
-	$bdd=coBdd();
+function sendMail($bdd){
+	
 	$id=$_GET['id'];
 	$requete = $bdd->query('SELECT * FROM tbuser INNER JOIN user_profil 
 								ON tbuser.userid=user_profil.user_id 
@@ -774,8 +805,8 @@ function sendMail(){
 	
 }
 
-function voirMsgUser(){
-	$bdd=coBdd();
+function voirMsgUser($bdd){
+	
 	$id=$_GET['id'];
 	$requete = $bdd->query("SELECT * FROM tbmessages WHERE userid='$id'");
 	echo'</br>';
@@ -796,8 +827,8 @@ function voirMsgUser(){
 	$requete->closeCursor();
 }
 
-function repondreMsg(){
-	$bdd=coBdd();
+function repondreMsg($bdd){
+	
 	$msgid = $_GET['msgid'];
 	$requete = $bdd->query("SELECT * FROM tbmessages WHERE mesid='$msgid'");
 	$donnee = $requete->fetch();
@@ -818,19 +849,20 @@ function repondreMsg(){
 		</form>';
 }
 
-function afficherTbMsg($param){
-	$bdd = coBdd();
+function afficherTbMsg($param,$bdd){
+	$id=$_SESSION['id'];
+	
 	if ($param==0) {
-		$requete = $bdd->query('SELECT * FROM tbmessages');
+		$requete = $bdd->query('SELECT * FROM tbmessages WHERE destId='.$id.'');
 	}
 	if ($param==1) {
-		$requete = $bdd->query('SELECT * FROM tbmessages ORDER BY mesid DESC');
+		$requete = $bdd->query('SELECT * FROM tbmessages WHERE destId='.$id.' ORDER BY mesid DESC');
 	}
 	if ($param==2) {
-		$requete = $bdd->query('SELECT * FROM tbmessages ORDER BY repondu ASC');
+		$requete = $bdd->query('SELECT * FROM tbmessages WHERE destId='.$id.' ORDER BY repondu ASC');
 	} 
 	if ($param==3) {
-		$requete = $bdd->query('SELECT * FROM tbmessages ORDER BY userid DESC');
+		$requete = $bdd->query('SELECT * FROM tbmessages WHERE destId='.$id.' ORDER BY userid DESC');
 	} 
 	
 	echo '</br>';
@@ -1144,7 +1176,7 @@ function checkStatut($profil_id){
 		return "Admin";
 	}
 	if ($profil_id==2) {
-		return "sous-dmin";
+		return "Modo";
 	}
 	if ($profil_id==3) {
 		return "user normal";
@@ -1231,5 +1263,1074 @@ function myPrint($param){
 	return '<pre>'.print_r($param,1).'<pre>';
 }
 
+
+
+
+function baliseBase($txt, $bdd){
+	$find1="/\[\s*!\s*\|\s*([^\[^\]^\|]*)\s*\]/is"; 	// ! com's
+	$find2="/\[\s*1\s*\|\s*([^\[^\]^\|]*)\s*\]/is";		// 1 h1
+	$find3="/\[\s*2\s*\|\s*([^\[^\]^\|]*)\s*\]/is"; 	// 2 h2
+	$find4="/\[\s*3\s*\|\s*([^\[^\]^\|]*)\s*\]/is"; 	// 3 h3
+	$find5="/\[\s*d\s*\|\s*([^\[^\]^\|]*)\s*\]/is"; 	// d div
+	$find6="/\[\s*p\s*\|\s*([^\[^\]^\|]*)\s*\]/is"; 	// s p
+
+	$find7="/\[\s*n\s*\]/is";							// n br
+	$find8="/\[\s*h\s*\]/is";							// h hr
+
+	$find9="/\[\s*b\s*\|\s*([^\[^\]^\|]*)\s*\]/is";		// b b
+	$find10="/\[\s*i\s*\|\s*([^\[^\]^\|]*)\s*\]/is";	// i i
+	$find11="/\[\s*u\s*\|\s*([^\[^\]^\|]*)\s*\]/is";	// u u
+
+
+	$find21="/\[\s*a\s*\|\s*([^\[^\]^\|]*)\s*\|\s*([^\[^\]^\|]*)\s*\]/is";			// a
+	$find22="/\[\s*img\s*\|\s*([^\[^\]^\|]*)\s*\|\s*([^\[^\]^\|]*)\s*\]/is";		// img
+	
+	$find25="/\[\s*#\s*([^\[^\]^\|]*)\s*\|\s*([^\[^\]^\|]*)\s*\]/is";				// color
+	$find26="/\[\s*bg\s*\|\s*([^\[^\]^\|]*)\s*\|\s*([^\[^\]^\|]*)\s*\]/is";			// bg color
+	$find27="/\[\s*div\s*\|#\s*([^\[^\]^\|]*)\s*\|\s*([^\[^\]^\|]*)\s*\]/is";		// div bg
+	$find28="/\[\s*div\s*\|\s*([^\[^\]^\|]*)\s*\|\s*([^\[^\]^\|]*)\s*\]/is";		// div url
+
+	$findAll=array($find1,$find2,$find3,$find4,$find5,$find6,
+				   $find7,$find8,$find9,$find10,$find11);
+
+
+	$replace=array("<--$1-->","<h1>$1</h1>","<h2>$1</h2>","<h3>$1</h3>",
+				   "<div>$1</div>","<p>$1</p>","<br>","<hr>","<b>$1</b>",
+				   "<i>$1</i>","<u>$1</u>");
+
+
+
+	$findAll2=array($find21,$find22,$find25,$find26,$find27,$find28);
+
+	$replace2=array("<a href=$1>$2</a>","<img src=$1 alt=$2>","<span style='color:#$1 ;'>$2</span>",
+					"<span style='background:$1 ;'>$2</span>","<div style='background : #$1 ;'>$2</div>",
+					"<div style='background : url($1) ;'>$2</div>");
+
+	$find31="/\[\s*ul\s*\|\s*([^\[^\]]*)\s*\]/is";
+	$find32="/\[\s*ol\s*\|\s*([^\[^\]]*)\s*\]/is";
+
+
+	$findTd="/\[\s*td\s*\|\s*([^\[^\]^\|]*)\s*\]/is";
+	$findTh="/\[\s*th\s*\|\s*([^\[^\]^\|]*)\s*\]/is";
+	$findTr="/\[\s*tr\s*\|\s*([^\[^\]^\|]*)\s*\]/is";
+
+
+	$findTab="/\[\s*tab\s*\|\s*([^\[^\]^\|]*)\s*\|\s*([^\[^\]^\|]*)\s*\|\s*([^\[^\]^\|]*)\s*\|\s*([^\[^\]^\|]*)\s*\]/is";
+
+
+	$findTableau=array($findTd,$findTh,$findTr,$findTab);
+	$replaceTableau=array("<td>$1</td>","<th>$1</th>","<tr>$1</tr>","<table style='border: $1 $2 $3px'>$4</table>");
+
+
+
+	$findOl_s="/\[\s*ol_\s*\|\s*([^\[^\]]*)\s*\|\s*([^\[^\]]*)\s*\|\s*([^\[^\]]*)\s*\]/is";
+
+
+
+
+
+
+
+	//replaceOl_s=""
+
+	$findMot="/\[\[\s*([^\[^\]^\|]*)\s*\]\]/is";
+	$replaceMot="<???>$1</???>";
+
+	$find="/\[\s*([^\[^\]^\|]*)\s*\|\s*([^\[^\]^\|]*)\s*\]/is";
+	$tous=array($find1,$find2,$find3,$find4,$find5,$find6,
+				   $find7,$find8,$find9,$find10,$find11,$find21,$find22,$find25,$find26,$find27,$find28,$find31,$find32,$findOl_s,$findMot);
+
+	$ok=false;
+	$string='';
+	while(!$ok){
+		$cond=false;
+		
+		while ($cond==false){
+			$string=$txt;
+			//$txt=remplaceMot($txt,$bdd);
+			$txt=preg_replace($findMot, $replaceMot,$txt);
+			$txt=preg_replace($findAll,$replace,$txt);
+			$txt=preg_replace($findAll2,$replace2,$txt);
+			$txt=preg_replace($findTableau,$replaceTableau,$txt);
+
+			$txt=preg_replace_callback($find31, 'toListeUl', $txt);
+			$txt=preg_replace_callback($find32, 'toListeOl', $txt);
+			$txt=preg_replace_callback($findOl_s, 'toListeOl_s', $txt);
+
+
+			//$txt=preg_replace_callback($find,'balEro',$txt);
+
+
+				
+			$cond=($string==$txt) ? true:false;
+		}
+		//echo $txt;
+		$find98='/\[\s*([^\[^\]^\|]*)\s*\|\s*([^\[^\]^\|]*)\s*\]/is';
+		$replace98="<?>$2</?>";
+		$txt=preg_replace($find98,$replace98,$txt);
+		
+		$find99="/\[\s*([^\[^\|]*)\s*\]/is";
+		$replace99="<????????>$1</?????????>";
+		$txt=preg_replace($find99,$replace99,$txt);
+
+
+		$ok=($string==$txt) ? true:false;
+	}
+
+	$txt = gestionMot($txt,$bdd);
+	return $txt;
+
+}
+
+
+function gestionMot($txt,$bdd){
+	$pos = strpos($txt, "<???>");
+	$ok=false;
+	$i = 0;
+	$string = $txt;
+	$nb=substr_count($txt, '<???>');
+	//while (!$ok) {
+	for ($i=0; $i < $nb ; $i++) { 
+
+		/*$i;
+		$nb=substr_count($txt, '<???>');
+		$list=explode('<???>', $txt);
+		$fini=$list[0];*/
+
+
+		$debut=strstr($txt, "<???>");
+		//echo myPrint($debut);
+		$debut=str_replace("<???>", "", $debut);
+		//echo myPrint($debut);
+		$mots = explode("</???>", $debut);
+		//echo myPrint($mots[0]);
+		$mot=$mots[0];
+
+		$explose="<???>".$mot."</???>";
+
+		//echo $explose;
+
+		$list=explode($explose, $txt);
+		$txt=$list[0];
+
+		//echo $mot;
+		$requete = $bdd->query('SELECT * FROM page WHERE pageKeyword="'.$mot.'"');
+		$donnee = $requete->fetch();
+		$sujetid=$donnee['sujetid'];
+		$pageid=$donnee['pageid'];
+		if (($donnee['sujetid'])!="") {
+			$mot="<div class='keywordOK'><a href='wikis.php?action=consulte1&sujetid=".$sujetid."&pageid=".$pageid."'>".$mot."</a></div>";
+		}
+		else{
+			$mot= "<div class='keyword'><a href='wikis.php?action=newPage&sujetid=".$_GET['sujetid']."&keyword=".$mot."'>".$mot."</a></div>";
+		}
+
+		$txt = $txt.$mot.$list[1];
+		/*if (strpos($txt, '<???>') !== FALSE){
+			$ok=FALSE;
+		}*/
+
+		//$ok=($string==$txt) ? true:false;
+
+	}
+	return $txt;
+
+}
+
+
+function remplaceMot($txt,$bdd){
+	$i;
+	$nb=substr_count($txt, '[[');
+	$list=explode('[[', $txt);
+	$fini=$list[0];
+
+	$debut=strstr($txt, "[[");
+	//echo myPrint($debut);
+	$debut=str_replace("[[", "", $debut);
+	//echo myPrint($debut);
+	$mots = explode("]]", $debut);
+	//echo myPrint($mots[0]);
+	$mot=$mots[0];
+	//echo $mot;
+	$findMot="/\[\[\s*".$mot."\s*\]\]/is";
+
+
+
+
+	
+
+	
+	//$bdd=coBdd();
+	//$string = str_replace($findMot, "$1", $txt);
+	//$string = str_replace("]]", "", $string);
+
+	$requete = $bdd->query('SELECT * FROM page WHERE pageKeyword="$mot"');
+	$donnee = $requete->fetch();
+	$sujetid=$donnee['sujetid'];
+	$pageid=$donnee['pageid'];
+	if (($donnee['sujetid'])!="") {
+		$mot="<div class'keywordOK'><a href='wikis.php?action=consulte1&sujetid=".$sujetid."&pageid=".$pageid."'>".$mot."</a></div>";
+	}
+	else{
+		$mot= "<div class'keyword'><a href='wikis.php?action=modifier&sujetid=".$_GET['sujetid']."'>".$mot."</a></div>";
+	}
+	echo $mot;
+	$fini = $fini.$mot;
+
+	for ($i=1; $i <$nb ; $i++) { 
+		$fini=$fini.$list[$i];
+	} 
+
+	
+	echo myPrint($fini);
+	return $fini;
+}
+
+
+function balEro($txt){
+	$bals=array("");
+
+
+	if (!in_array($find, $os)) {
+    echo "Got Irix";
+	}
+	return $txt;
+}
+
+function toListe($string){
+
+	$find="/\s*\|\s*/is";
+	$replace="</li><li>";
+	$string=preg_replace($find,$replace,$string);
+	return $string;
+}
+
+
+function toListeUl($matches){
+	$array=explode('|',$matches[0]);
+	$string='';
+	for ($i=1;$i<count($array)-1;$i++){
+		$string.=trim($array[$i]).'|';
+	}
+	$i=count($array)-1;
+	$string2=$array[$i];
+	$string2=strstr($string2,']',true);
+	$string.=$string2;
+	return '<ul><li>'.toListe($string).'</li></ul>';
+
+}
+
+function toListeOl($matches){
+	$array=explode('|',$matches[0]);
+	$string='';
+	for ($i=1;$i<count($array)-1;$i++){
+		$string.=trim($array[$i]).'|';
+	}
+	$i=count($array)-1;
+	$string2=$array[$i];
+	$string2=strstr($string2,']',true);
+	$string.=$string2;
+	return '<ol><li>'.toListe($string).'</li></ol>';
+
+}
+
+function toListeOl_s($matches){
+	$array=explode('|',$matches[0]);
+	$string='';
+	for ($i=3;$i<count($array)-1;$i++){
+		$string.=trim($array[$i]).'|';
+	}
+	$i=count($array)-1;
+	$string2=$array[$i];
+	$string2=strstr($string2,']',true);
+	$string.=$string2;
+	$type=$array[1];
+	$start=$array[2];
+	return '<ol type='.$type.' start='.$start.'><li>'.toListe($string).'</li></ol>';
+
+}
+
+
+function charSpe($text){
+	$recherche=array('\|','&','<','>','"','à','\[','\]','\^','^','\\');
+	$remplacement=array('|','&#38;','&lsaquo;','&rsaquo;','&quot;','&agrave;','&#91;','&#93;','&#94;','&nbsp;','&#92;');
+	$bbcode = array('\\\\',
+					'\[',
+					'\]',
+					'\|',
+					'\^',
+					'^',
+					'<',
+					'>'
+                );
+  	$htmlcode = array('\\',
+  					  '[',
+  					  ']',
+  					  '|',
+  					  '^',
+  					  ' ',
+  					  '<',
+  					  '>'
+  					);
+ 	$newtext = str_replace($recherche, $remplacement, $text);
+  	//$newtext = nl2br($newtext);
+  	return $newtext;
+}
+
+
+
+/*function afficheWikisAncien($bdd){
+	$i=1;
+	
+	if (!isset($_SESSION['login'])) {
+		$requete = $bdd->query('SELECT * FROM sujet INNER JOIN page 
+								WHERE sujet.sujetid = page.sujetid 
+								AND sujet.visibilityAuthorChoice  <  2 AND sujet.visibilityModoChoice < 2 AND sujet.visibilityAdminChoice < 2
+								
+								UNION
+								SELECT * FROM sujet INNER JOIN page 
+								WHERE sujet.sujetid = page.sujetid 
+								AND sujet.visibilityModoChoice < 2 AND sujet.visibilityAdminChoice < 2
+								
+								UNION
+								SELECT * FROM sujet INNER JOIN page 
+								WHERE sujet.sujetid = page.sujetid 
+								AND sujet.visibilityAdminChoice < 2
+								
+								ORDER BY sujetDateCrea DESC');
+		if (!empty($_POST)) {
+					$requete = $bdd->query('SELECT * FROM sujet INNER JOIN page 
+						WHERE sujet.sujetid = page.sujetid 
+						AND sujet.visibilityModoChoice < 3 AND sujet.visibilityAdminChoice < 3
+						AND page.pageKeyword IS NULL 
+						UNION 
+						SELECT * FROM sujet INNER JOIN page 
+						WHERE sujet.sujetid = page.sujetid 
+						
+						
+						UNION
+						SELECT * FROM sujet INNER JOIN page 
+						WHERE sujet.sujetid = page.sujetid 
+						AND sujet.visibilityAdminChoice < 3
+						
+						ORDER BY sujetDateCrea DESC');
+		}
+	}
+	else{
+		$id=$_SESSION['id'];
+
+	}
+
+	if (isset($_SESSION['login'])) {
+		$requete = $bdd->query('SELECT * FROM sujet INNER JOIN page 
+						WHERE sujet.sujetid = page.sujetid 
+						AND sujet.visibilityModoChoice < 3 AND sujet.visibilityAdminChoice < 3
+						AND page.pageKeyword IS NULL 
+						UNION 
+						SELECT * FROM sujet INNER JOIN page 
+						WHERE sujet.sujetid = page.sujetid 
+						AND sujet.authorid = '.$id.'
+						
+						UNION
+						SELECT * FROM sujet INNER JOIN page 
+						WHERE sujet.sujetid = page.sujetid 
+						AND sujet.visibilityAdminChoice < 3
+						
+						ORDER BY sujetDateCrea DESC');
+	}
+
+	if (isset($_SESSION['ismodo'])) {
+		$requete = $bdd->query('SELECT * FROM sujet INNER JOIN page 
+						WHERE sujet.sujetid = page.sujetid 
+						AND sujet.visibilityAdminChoice < 4
+						AND page.pageKeyword IS NULL 
+						UNION 
+						SELECT * FROM sujet INNER JOIN page 
+						WHERE sujet.sujetid = page.sujetid 
+						AND sujet.authorid = '.$id.'
+						
+						ORDER BY sujetDateCrea DESC');
+	}
+
+	if (isset($_SESSION['isadmin'])) {
+		$requete = $bdd->query('SELECT * FROM sujet INNER JOIN page WHERE sujet.sujetid = page.sujetid  ORDER BY sujetDateCrea DESC');
+	}
+
+	$trouve=false;
+
+	while ($donnees = $requete->fetch()){
+		if (empty($_POST)) {
+			afficheUnWiki($i,$donnees);
+		}
+		else{
+
+			if (isset($_POST['rechTitre'])) {
+				$pos1 = stripos($donnees['sujetTitle'],$_POST['rechTitre']);
+				if ($pos1 !== false) {
+					afficheUnWiki($i,$donnees);
+					$trouve=true;
+				}
+
+			}
+			if (isset($_POST['rechDesc'])) {
+				$pos2 = stripos($donnees['sujetDesc'],$_POST['rechDesc']);
+				if ($pos2 !== false) {
+					afficheUnWiki($i,$donnees);
+					$trouve=true;
+				}
+
+			}
+			if (isset($_POST['rechKeyword'])) {
+				
+				$pos3 = stripos($donnees['pageKeyword'],$_POST['rechKeyword']);
+				if ($pos3 !== false) {
+					afficheUnWiki($i,$donnees);
+					$trouve=true;
+				}
+			}
+		}
+		
+	}
+	if (!empty($_POST)) {
+		if (!$trouve) {
+			echo "</br>Aucun sujet trouvé.</br></br>";
+		}
+	}
+	
+}*/
+
+function afficheWikis($bdd){
+	$i=1;
+	if (isset($_SESSION['id'])) {
+		$id=$_SESSION['id'];
+	}
+
+	
+	$requete = $bdd->query('SELECT * FROM sujet INNER JOIN page WHERE sujet.sujetid = page.sujetid  ORDER BY sujetDateCrea DESC');
+	if (!empty($_POST['perso'])) {
+		if ($_POST['perso']=='oui') {
+			$requete = $bdd->query('SELECT * FROM sujet INNER JOIN page WHERE sujet.sujetid = page.sujetid AND sujet.authorid='.$id.' ORDER BY sujetDateCrea DESC');
+		}
+	}
+	if (!empty($_POST['modo'])) {
+		if ($_POST['modo']=='oui') {
+			$requete = $bdd->query('SELECT * FROM sujet INNER JOIN page WHERE sujet.sujetid = page.sujetid AND sujet.modoid='.$id.' ORDER BY sujetDateCrea DESC');
+		}
+	}	
+
+	$trouve=false;
+
+	while ($donnees = $requete->fetch()){
+		$statut=checkLevel($donnees);
+		$affiche=false;
+		$ok=true;
+		if (empty($_POST)) {
+			
+			if ($donnees['pageKeyword']==NULL) {
+				$i=checkAffiche($i,$statut,$donnees);
+			}		
+					
+		}
+		else{
+			//checkRecherche($donnee,$statut,$i);
+			if (!empty($_POST['rechTitre'])) {
+				$pos1 = stripos($donnees['sujetTitle'],$_POST['rechTitre']);
+				if ($pos1 !== false) {
+					if ($donnees['pageKeyword']==NULL) {
+						$i=checkAffiche($i,$statut,$donnees);
+						$trouve=true;
+						$affiche=true;
+					}	
+				}
+				else{
+					$ok = false;
+				}
+
+			}
+			if (!empty($_POST['rechDesc']) && $ok && !$affiche) {
+				$pos2 = stripos($donnees['sujetDesc'],$_POST['rechDesc']);
+				if ($pos2 !== false) {
+					if ($donnees['pageKeyword']==NULL) {
+						$i=checkAffiche($i,$statut,$donnees);
+						$trouve=true;
+						$affiche=true;
+					}					
+				}
+				else{
+					$ok = false;
+				}
+
+			}
+			if (!empty($_POST['rechKeyword']) && $ok && !$affiche) {
+				
+				$pos3 = stripos($donnees['pageKeyword'],$_POST['rechKeyword']);
+				if ($pos3 !== false) {
+					$i=checkAffiche($i,$statut,$donnees);
+					$trouve=true;
+					$affiche=true;
+				}
+				else{
+					$ok = false;
+				}
+
+			}
+
+			if (!empty($_POST['rechContent']) && $ok && !$affiche) {
+				
+				$pos3 = stripos($donnees['pageContent'],$_POST['rechContent']);
+				if ($pos3 !== false) {
+					$i=checkAffiche($i,$statut,$donnees);
+					$trouve=true;
+					$affiche=true;
+				}
+				else{
+					$ok = false;
+				}
+
+			}
+
+			if (!empty($_POST['perso']) && $ok && !$affiche) {
+				$i=checkAffiche($i,$statut,$donnees);
+				$trouve=true;
+			}
+			if (!empty($_POST['modo']) && $ok && !$affiche) {
+				$i=checkAffiche($i,$statut,$donnees);
+				$trouve=true;
+			}
+		}
+
+		
+	}
+	if (!empty($_POST)) {
+		if (!$trouve) {
+			echo "</br>Aucun sujet trouvé.</br></br>";
+		}
+	}
+	
+}
+
+
+
+function checkRecherche($donnee,$statut,$i){
+	if (isset($_POST['rechTitre'])) {
+		$pos1 = stripos($donnees['sujetTitle'],$_POST['rechTitre']);
+		if ($pos1 !== false) {
+			if ($donnees['pageKeyword']==NULL) {
+				$checkAffiche=checkAffiche($i,$statut,$donnees);
+			}
+			$trouve=true;
+			$affiche=true;
+		}
+	}
+
+}
+
+
+function checkLevel($donnees){
+	if ($donnees['visibilityAdminChoice']==0) {
+		if ($donnees['visibilityModoChoice']==0) {
+			if ($donnees['visibilityAuthorChoice']==1) {
+				return 1;
+			}
+			if ($donnees['visibilityAuthorChoice']==2) {
+				return 2;
+			}
+			if ($donnees['visibilityAuthorChoice']==3) {
+				return 3;
+			}
+			if ($donnees['visibilityAuthorChoice']==4) {
+				return 4;
+			}
+		}
+		if ($donnees['visibilityModoChoice']==1) {
+			return 1;
+		}
+		if ($donnees['visibilityModoChoice']==2) {
+			return 2;
+		}
+		if ($donnees['visibilityModoChoice']==3) {
+			return 3;
+		}
+		if ($donnees['visibilityModoChoice']==4) {
+			return 4;
+		}
+	}
+	if ($donnees['visibilityAdminChoice']==1) {
+		return 1;
+	}
+	if ($donnees['visibilityAdminChoice']==2) {
+		return 2;
+	}
+	if ($donnees['visibilityAdminChoice']==3) {
+		return 3;
+	}
+	if ($donnees['visibilityAdminChoice']==4) {
+		return 4;
+	}
+}
+
+function checkAffiche($i,$statut,$donnees){
+	if ($statut==1) {
+		afficheUnWiki($i,$donnees,1);
+		$i++;
+		return $i;
+	}
+	if ($statut==2) {
+		if (isset($_SESSION['id'])) {
+			afficheUnWiki($i,$donnees,2);
+		}
+		else{
+			if (!empty($_POST)) {
+				afficheUnWikiAnonyme($i,$donnees);
+				$i++;
+				return $i;
+			}
+		}
+
+	}
+	if ($statut==3) {
+		if (isset($_SESSION['ismodo'])) {
+			afficheUnWiki($i,$donnees,3);
+			$i++;
+			return $i;
+		}
+		if (isset($_SESSION['isadmin'])) {
+			afficheUnWiki($i,$donnees,3);
+			$i++;
+			return $i;
+		}
+	}
+	if ($statut==4) {
+		if (isset($_SESSION['isadmin'])) {
+			afficheUnWiki($i,$donnees,4);
+			$i++;
+			return $i;
+		}
+	}	
+
+}
+
+function afficheUnWikiAncien($i,$donnees){
+	
+	if (!empty($_POST['rechKeyword'])) {
+		
+		if (($i%2)==0) {
+			echo "<div class='changeBack'>";
+		}
+		else{
+			echo "<div class='changeBack2'>";
+		}
+		$sujetid=$donnees['sujetid'];
+		$pageid=$donnees['pageid'];
+		//si le user est connecté, il pourra aaccèdé à la page
+		if (isset($_SESSION['id'])) {
+			echo "<div class='titreSujet'><a href='wikis.php?action=consulte1&sujetid=".$sujetid."&pageid=".$pageid."'>";
+		}
+		//sinon (anonyme), s'il veut avoir accès à la page et que les users peuvent il doit se connecter
+		else{
+			$userOnly=checkUserOnly($donnees);
+			if ($userOnly) {
+				echo "<div class='titreSujet'><a href='wikis.php?action=anonyme'>";
+			}
+			else{
+				echo "<div class='titreSujet'><a href='wikis.php?action=consulte1&sujetid=".$sujetid."&pageid=".$pageid."'>";
+			}
+			
+		}
+		
+		echo myPrint($donnees['sujetTitle']);
+		echo "</a></div>";
+		echo "Date de création: ".$donnees['sujetDateCrea']."  Dernière modification: ".$donnees['sujetDateModif'];
+		echo "</div>";
+		$i++;
+	}
+	else{
+		if ($donnees['pageKeyword'] == NULL) {
+			if (($i%2)==0) {
+				echo "<div class='changeBack'>";
+			}
+			else{
+				echo "<div class='changeBack2'>";
+			}
+			$sujetid=$donnees['sujetid'];
+			$pageid=$donnees['pageid'];
+			//si le user est connecté, il pourra aaccèdé à la page
+			if (isset($_SESSION['id'])) {
+				echo "<div class='titreSujet'><a href='wikis.php?action=consulte1&sujetid=".$sujetid."&pageid=".$pageid."'>";
+			}
+			//sinon (anonyme), s'il veut avoir accès à la page et que les users peuvent il doit se connecter
+			else{
+				$userOnly=checkUserOnly($donnees);
+				if ($userOnly) {
+					echo "<div class='titreSujet'><a href='wikis.php?action=anonyme'>";
+				}
+				else{
+					echo "<div class='titreSujet'><a href='wikis.php?action=consulte1&sujetid=".$sujetid."&pageid=".$pageid."'>";
+				}
+				
+			}
+		
+			echo myPrint($donnees['sujetTitle']);
+			echo "</a></div>";
+			echo "Date de création: ".$donnees['sujetDateCrea']."  Dernière modification: ".$donnees['sujetDateModif'];
+			echo "</div>";
+			$i++;
+		}
+	}
+}
+
+function afficheUnWikiAnonyme($i,$donnees){
+	if (($i%2)==0) {
+		echo "<div class='changeBack'>";
+	}
+	else{
+		echo "<div class='changeBack2'>";
+	}
+	$sujetid=$donnees['sujetid'];
+	$pageid=$donnees['pageid'];
+	echo "</br> 
+		  <div class='titreSujet'>
+		  <img src='img/Membership Icon I.png' width='25' height='25'/>
+		  <a href='wikis.php?action=anonyme'>";
+	echo $donnees['sujetTitle'];
+	echo "</a></div></br></br>";
+	echo "Date de création: ".$donnees['sujetDateCrea']."  Dernière modification: ".$donnees['sujetDateModif'];
+	echo "</div></br></br>";
+	$i++;
+}
+
+function afficheUnWiki($i,$donnees,$j){	
+	if (($i%2)==0) {
+		echo "<div class='changeBack'>";
+	}
+	else{
+		echo "<div class='changeBack2'>";
+	}
+	$sujetid=$donnees['sujetid'];
+	$pageid=$donnees['pageid'];
+	echo "</br><div class='titreSujet'>";
+
+	if ($j==2) {
+		echo"<img src='img/Membership Icon I.png' width='25' height='25'/>";
+	}
+	if ($j==1) {
+		echo"<img src='img/anonyme.png' width='25' height='25'/>";
+	}
+	if ($j==3) {
+		echo"<img src='img/icon-admin_user-blue1.png' width='25' height='25'/>";
+	}
+	if ($j==4) {
+		echo"<img src='img/login_icon.jpg' width='25' height='25'/>";
+	}
+
+	echo"<a href='wikis.php?action=consulte1&sujetid=".$sujetid."&pageid=".$pageid."'>";
+	echo $donnees['sujetTitle'];
+	echo "</a></div></br></br>";
+	echo "Date de création: ".$donnees['sujetDateCrea']."  Dernière modification: ".$donnees['sujetDateModif'];
+	if (isset($_SESSION['login'])) {
+		if ($donnees['authorid']==$_SESSION['id']) {
+			echo '</br><a href="wikis.php?action=supprimerSujet&sujetid='.$sujetid.'">Supprimer le sujet</a>';
+		}
+	}
+	if (isset($_SESSION['isadmin'])) {
+		if ($donnees['modoId']<1) {
+			echo '</br><a href="wikis.php?action=assignModo&sujetid='.$sujetid.'">Assigner un modérateur</a>';
+		}
+		else{
+			echo '</br><a href="wikis.php?action=assignModo&sujetid='.$sujetid.'">Changer de modérateur</a>';
+			echo '</br><a href="wikis.php?action=suppModo&sujetid='.$sujetid.'">Supprimer modérateur</a>';
+		}
+		echo '</br><a href="wikis.php?action=visiAdminChoice&sujetid='.$sujetid.'">Choisir visibilité</a>';
+	}
+	if(isset($_SESSION['ismodo'])){
+		if ($donnees['modoId'] == $_SESSION['id']) {
+			echo '</br><a href="wikis.php?action=visiModoChoice&sujetid='.$sujetid.'">Choisir visibilité</a>';
+		}
+	}
+	if (isset($_SESSION['login'])) {
+		echo '</br><a href="wikis.php?action=signalerSujet&sujetid='.$sujetid.'">Signaler le sujet</a>';
+	}
+
+	echo "</div></br></br>";
+	
+
+}
+
+function rechercheWiki(){
+	echo ' </br><h4> Recherche : </h4>';
+	echo '<form method="post" action="wikis.php?action=consulter">';
+	echo "
+
+		<label for='rechTitre'>Titre : </label>
+		<input type='text' name='rechTitre' id='rechTitre' size='30' maxlength='15' />
+		<br/><br/>
+		<label for='rechDesc'>Description : </label>
+		<input type='text' name='rechDesc' id='rechDesc' size='30' maxlength='55' />
+		<br/><br/>
+		<label for='rechKeyword'>Mots clés : </label>
+		<input type='text' name='rechKeyword' id='rechKeyword' size='30' maxlength='15' />
+		<br/><br/>";
+
+		if (isset($_SESSION['login'])) {
+			echo 'Faire la recherche dans mes wikis : <input type="radio" name="perso" value="oui" >oui<input type="radio" name="perso" value="non" >non <br/>';
+		}
+		if (isset($_SESSION['ismodo'])) {
+			echo '</br>Faire la recherche dans les wikis que je modère: <input type="radio" name="modo" value="oui" >oui<input type="radio" name="modo" value="non" >non 
+			<br/><br/>
+			<label for="rechContent">Contenu : </label>
+			<input type="text" name="rechContent" id="rechContent" size="30" maxlength="15" />
+			<br/>';
+		}
+
+
+	echo '<p> <input type="submit" value="Valider"/> ';
+}
+
+function checkUserOnly($donnees){
+	if ($donnees['visibilityAdminChoice']=2) {
+		return true;
+	}
+	else{
+		return FALSE;
+	}
+	if ($donnees['visibilityModoChoice']=2) {
+		return true;
+	}
+		else{
+			if ($donnees['visibilityAuthorChoice']=2) {
+				return true;
+			}
+		}
+	
+	return false;
+}
+
+function afficheFormWiki(){
+
+	if (isset($_POST['sujet'])) {
+		echo'	<input type="text" name="sujet" id="sujet" value="'.$_POST['sujet'].'" size="50" maxlength"50" required/></br> </br>';
+	}else{
+		echo'	<input type="text" name="sujet" id="sujet"  size="50" maxlength"50" required/></br> </br>';
+	}
+	
+
+	echo '	</br><label for="visible"> Visibilité :</label>
+
+
+			<select name="visible" required>
+					<option value="1">Anonyme</option> 
+	  				<option value="2">Membre</option>';
+	  		if (isset($_SESSION['ismodo'])) {
+	  			echo'<option value="3">Modérateur</option>';
+	  		}
+	  		if (isset($_SESSION['isadmin'])) {
+	  			echo'<option value="3">Modérateur</option>
+	  				<option value="4">Admin</option>';
+	  		}
+			echo'	</select>';
+
+				/*<option value="1 --> Anonyme">
+				  <option value="2 --> Membre">
+				  <option value="3 --> Modérateur">
+				  <option value="4 --> Admin">*/
+
+
+	echo'	</br></br><label for="description"> Description :</label> </br>';
+
+			//<input type="text" name="description" id="description" value="'.$_POST['description'].'" size="50" maxlength"200" required/> </br>';*/
+
+	if (isset($_POST['description'])) {
+			echo"	<textarea name='description' rows='10' cols='73' required>".$_POST['description']."</textarea></br></br>
+			<label for='content'> Contenu :</label> </br>
+			<textarea name='content' rows='40' cols='150' required>".$_POST['content']."</textarea>
+			</br>";
+	}else{
+			echo"	<textarea name='description' rows='10' cols='73' required></textarea></br></br>
+			<label for='content'> Contenu :</label> </br>
+			<textarea name='content' rows='40' cols='150' required></textarea>
+			</br>";
+	}
+
+
+	echo"		<span class='marge'><input type='submit' name='Translate' value='Translate'/></span>
+			<span class='marge'><input type='submit' name='valide' value='valider'/></span>
+	    </p>
+		</form>";
+}
+
+function afficheFormPage($sujetid,$keyword){
+	echo"
+		<form method='post' action='wikis.php?action=newPage&sujetid=".$sujetid."&keyword=".$keyword."'>
+	    <p></br>"; 
+
+	echo"<label for='content'> Contenu :</label> </br>";
+
+	if (isset($_POST['content'])) {
+		echo "<textarea name='content' rows='40' cols='150' required>".$_POST['content']."</textarea>";
+	}
+	else{
+		echo "<textarea name='content' rows='40' cols='150' required></textarea>";
+	}
+
+	echo"</br>
+		<span class='marge'><input type='submit' name='Translate' value='Translate'/></span>
+		<span class='marge'><input type='submit' name='valide' value='valider'/></span>
+	    </p>
+		</form>";
+}
+
+
+function formModif($donnee,$donnee1,$sujetid,$pageid){
+
+	echo"
+		<form method='post' action='wikis.php?action=modifier&sujetid=".$sujetid."&pageid=".$pageid."'>
+	    <p></br>
+	   		<label for='sujet'> Sujet :</label>"; 
+
+	echo'	<input type="text" name="sujet" id="sujet" value="'.$donnee1['sujetTitle'].'" size="50" maxlength"50" required/></br> </br>';
+
+	echo '	</br><label for="visible"> Visibilité :</label>
+
+
+			<select name="visible" required>
+					<option value="1">Anonyme</option> 
+	  				<option value="2">Membre</option>';
+	  		if (isset($_SESSION['ismodo']) ){
+	  			echo'<option value="3">Modérateur</option>';
+	  		}
+	  		if (isset($_SESSION['isadmin'])) {
+	  			echo'<option value="3">Modérateur</option>
+	  				<option value="4">Admin</option>';
+	  		}
+			echo'	</select>';
+
+	echo'	</br></br><label for="description"> Description :</label> </br>';
+
+			//<input type="text" name="description" id="description" value="'.$_POST['description'].'" size="50" maxlength"200" required/> </br>';*/
+	echo"	<textarea name='description' rows='10' cols='73' required>".$donnee1['sujetDesc']."</textarea></br></br>
+			<label for='content'> Contenu :</label> </br>
+			<textarea name='content' rows='40' cols='150' required>".$donnee['pageContent']."</textarea>
+			</br>
+			<span class='marge'><input type='submit' name='Translate' value='Translate'/></span>
+			<span class='marge'><input type='submit' name='valide' value='valider'/></span>
+	    </p>
+		</form>";
+}
+
+function signalerPage($bdd){
+	$sujetid=$_GET['sujetid'];
+	$pageid=$_GET['pageid'];
+
+	$requete = $bdd->query('SELECT * FROM sujet INNER JOIN page WHERE sujet.sujetid ='.$sujetid.' AND page.pageid='.$pageid.'');
+	$donnee = $requete->fetch();
+	//echo myPrint($donnee);
+
+	echo'<div id="signaler">
+		<form method="post" action="wikis.php?action=signaler&sujetid='.$sujetid.'&pageid='.$pageid.'">
+		<p>
+			<label for="target">Contacter : </label>
+
+			<select name="target" >
+					<option selected value="'.$donnee['authorid'].'">l\'auteur</option>';
+	  		if ($donnee['modoId'] > 0) {
+	  			echo'<option value="'.$donnee['modoid'].'">le modérateur</option>';
+	  		}
+
+	  			echo'<option value="44">l\'admin</option>';
+	  		
+			echo'	</select>';
+
+	echo'			
+			</br>
+			<label for="content">Contenu : </label>
+			<textarea name="content" rows="5" cols="40" required></textarea>
+			</br>
+			<span class="marge"><input type="submit" value="Signaler"/></span>
+		</p>
+		</form></div>';
+}
+
+function postSignaler($bdd){
+	$sujetid=$_GET['sujetid'];
+	$pageid=$_GET['pageid'];
+
+	$chemin='wikis.php?action=consulte1&sujetid='.$sujetid.'&pageid='.$pageid;
+
+	$sujet ='Problème dans la page : <a href='.$chemin.'>'.$pageid.'</a>';
+	$mail = $_SESSION['mail'];
+	$content = $_POST['content'];
+	$userid=$_SESSION['id'];
+
+	$parentid = 0;
+	$repondu = 0;
+	$destId = $_POST['target'];
+	$msgDateCrea = date("Y-m-d H:i:s",time()); 	
+
+	$requete=$bdd->prepare('INSERT INTO tbmessages SET messujet=?, mail=?, mestextes=? , userid=?, mesparentid=?, repondu=0, destId=?, msgDateCrea=?, msgPageId=? ');
+
+	$requete->execute(array($sujet,$mail,$content,$userid,$parentid,$destId,$msgDateCrea,$pageid));
+
+	echo "Message envoyé";
+}
+
+function signalerSujet($bdd){
+	$sujetid=$_GET['sujetid'];
+
+	$requete = $bdd->query('SELECT * FROM sujet WHERE sujet.sujetid ='.$sujetid.' ');
+	$donnee = $requete->fetch();
+	//echo myPrint($donnee);
+
+	echo'<div id="signaler">
+		<form method="post" action="wikis.php?action=signalerSujet&sujetid='.$sujetid.'">
+		<p>
+			<label for="target">Contacter : </label>
+
+			<select name="target" >
+					<option selected value="'.$donnee['authorid'].'">l\'auteur</option>';
+	  		if ($donnee['modoId'] > 0) {
+	  			echo'<option value="'.$donnee['modoid'].'">le modérateur</option>';
+	  		}
+	  		
+	  			echo'<option value="44">l\'admin</option>';
+	  		
+			echo'	</select>';
+
+	echo'			
+			</br>
+			<label for="content">Contenu : </label>
+			<textarea name="content" rows="5" cols="40" required></textarea>
+			</br>
+			<span class="marge"><input type="submit" value="Signaler"/></span>
+		</p>
+		</form></div>';
+}
+
+function postSignalerSujet($bdd){
+	$sujetid=$_GET['sujetid'];
+	$chemin='wikis.php?action=consulte1&sujetid='.$sujetid;
+
+	$sujet ='Problème sujet : <a href='.$chemin.'>'.$sujetid.'</a>';
+	$mail = $_SESSION['mail'];
+	$content = $_POST['content'];
+	$userid=$_SESSION['id'];
+
+	$parentid = 0;
+	$repondu = 0;
+	$destId = $_POST['target'];
+	$msgDateCrea = date("Y-m-d H:i:s",time()); 	
+
+	$requete=$bdd->prepare('INSERT INTO tbmessages SET messujet=?, mail=?, mestextes=? , userid=?, mesparentid=?, repondu=0, destId=?, msgDateCrea=?, msgSujetId=? ');
+
+	$requete->execute(array($sujet,$mail,$content,$userid,$parentid,$destId,$msgDateCrea,$sujetid));
+
+	echo "Message envoyé";
+}
+
+
+
 ?>
+
+
+
+
 </html>

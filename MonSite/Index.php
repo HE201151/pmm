@@ -56,6 +56,7 @@
 
 <?php
 	echo 'Bienvenue sur le site ';
+	//echo myPrint($_SESSION);
 	verifProfil();
 	//echo myPrint($_SERVER);
 	//echo $_SERVER['SERVER_NAME'];

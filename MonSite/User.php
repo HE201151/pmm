@@ -43,9 +43,10 @@
 <div class="sous_menu">
 
 <?php
+$bdd=coBdd();
 	if(isset($_SESSION['login'])){
 	//Connexion BDD
-	$bdd=coBdd();
+	
 	$id = $_SESSION['id'];
 
 	//Si on envoie un formulaire
@@ -57,7 +58,8 @@
 		//$requete = $bdd->query('SELECT userid, pseudo, userpwd, usermail, etat, userdateinscription FROM tbuser WHERE (userid)= \'' . $_SESSION['id'] . '\'');
 		$donnee = $requete->fetch(); 
 		//On vérifie le mdp
-		$password=sha1($_POST['pass']);
+		$password = hash('sha256', $_POST['pass']);
+		//$password=sha1($_POST['pass']);
 		if ($password == $donnee['userpwd']) {
 			$requete = $bdd->query('SELECT userid, pseudo, userpwd, usermail FROM tbuser WHERE (pseudo)= \'' . $_POST['pseudo'] . '\'');
 			$donnee = $requete->fetch();
@@ -79,11 +81,11 @@
 			}
 			// Si l'utilisateur souhaite changer de mdp
 			if (!empty($_POST['newpass'])) {
-				newPass();
+				newPass($bdd);
 			}
 			// Si l'utilisateur veut changer de mail
 			if(($_POST['mail'])!= ($donnee['usermail'])){
-				newMail();
+				newMail($bdd);
 			}
 			// Si l'utilisateur envoie un avatar
 			if (!empty($_FILES['avatar']['name'])) {

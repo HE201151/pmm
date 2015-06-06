@@ -67,6 +67,7 @@ $message = 'votre mail avec comme sujet \''.$_POST['sujet'].'\' a bien été env
 mail($to ,$sujet, $message, 'From: Romain Blan <romain.blan@hotmail.fr>') ;
 
 $psujet = $_POST['sujet'];
+$mysqldate = date("Y-m-d H:i:s",time()); 
 $bdd=coBdd();
 	
 	
@@ -75,9 +76,11 @@ $bdd=coBdd();
 	$bdd->exec($sql);*/
 
 
-	$bdd->exec('insert into tbmessages (messujet,mail,mestextes,userid) values ("'.$psujet.'","'.$to.'","'.$content.'",'.$userid.');');
+	//$bdd->exec('insert into tbmessages (messujet,mail,mestextes,userid,msgDateCrea) values ("'.$psujet.'","'.$to.'","'.$content.'",'.$userid.','.$mysqldate.');');
 
+	$requete=$bdd->prepare('INSERT INTO tbmessages SET messujet=?, mail=?, mestextes=? , destId=44, userid=?, msgDateCrea=? ');
 
+	$requete->execute(array($psujet,$to,$content,$userid,$mysqldate));
 
 	echo 'Message envoyé';
 }

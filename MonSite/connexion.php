@@ -32,10 +32,11 @@
 <div id="menu">
 
 <?php
+$bdd=coBdd();
 	setSession();
 	$check=99999;
 	if((!empty($_POST['pseudo'])) and (!empty($_POST['pass']))){
-		$check=login();
+		$check=login($bdd);
 		if($check==1){
 			$_SESSION['login']='ok';
 			
@@ -59,6 +60,7 @@
 			$_SESSION['login']='ok';
 			$_SESSION['profilComplet'] = 'nok';
 		}
+
 	}
 	
 	
@@ -85,11 +87,14 @@
 	if($check==2){
 		echo 'Compte inactif, veuillez consulter votre boîte mail pour activer votre compte.';
 	}
+	if($check==9){
+			echo "Votre compte est banni";
+	}
 
 
 
 	if(isset($_POST['question'])){
-		completeProfil();
+		completeProfil($bdd);
 		echo '</br><div class="instruction">Profil complété avec succès</div> </br>';
 		$_SESSION['profilComplet'] = 'ok';
 	}
@@ -100,7 +105,7 @@
 
 
 if(isset($_POST['email'])){
-	$bdd=coBdd();
+	
 	//$requete = $bdd->query('SELECT p.userid, p.pseudo, p.userpwd, p.usermail, u.profil_id FROM tbuser p, user_profil u WHERE (p.pseudo)= \'' . $_POST['pseudo'] . '\' AND u.user_id= p.userid');
 	//$requete = $bdd->query('SELECT p.userid, p.pseudo, p.userpwd, p.usermail, p.question, u.profil_id FROM tbuser p, user_profil u WHERE (usermail)= \'' . $_POST['email'] . '\' AND u.user_id=p.userid');
 
@@ -145,7 +150,25 @@ if(isset($_POST['email'])){
 				Pour réinitialiser votre mot de passe, veuillez cliquer sur le lien ci dessous
 				ou copier/coller dans votre navigateur internet.
 				 
-				http://193.190.65.94/he201151/ESSAIS/MonSite/validation.php?cle='.urlencode($cle).'
+									http';
+					if ($_SERVER['HTTPS']=='on') {
+						$message=$message.'s';
+					}
+					else {
+						//$message=$message.'no';
+					}
+
+					
+					$serverName=$_SERVER['SERVER_NAME'];
+					$path=$_SERVER['PHP_SELF'];
+					$nb=substr_count($path, '/');
+					$list=explode('/', $path);
+					$message=$message.'://';
+					$chemin=$list[0].'/';
+					for ($i=1; $i <$nb ; $i++) { 
+						$chemin=$chemin.$list[$i].'/';
+					}
+					$message=$message.$serverName.$chemin.'/validation.php?cle='.urlencode($cle).'
 				 
 				 
 				---------------
@@ -204,7 +227,7 @@ if(!isset($_SESSION['login'])){
 }
 else{
 	//$pseudo=$_POST['pseudo'];
-	$bdd=coBdd();
+	
 	$id =  $_SESSION['id'];
 	$requete = $bdd->query("SELECT p.userid, p.pseudo, p.userpwd, p.usermail, p.userdateinscription, p.question, p.reponse, u.profil_id FROM tbuser p, user_profil u WHERE (userid)= '$id' AND u.user_id=p.userid");
 	$donnee = $requete->fetch();
@@ -220,10 +243,14 @@ else{
 		$_SESSION['newmail']='nok';
 	}
 	if($donnee['profil_id'] == 2){
-		$statut='Sous-admin';
+		$statut='Modérateur';
+		$_SESSION['ismodo'] ='ok';
 	}
 	if($donnee['profil_id'] == 4){
 		$statut='';
+	}
+	if($donnee['profil_id'] == 9){
+		
 	}
 	if($check==33){
 		echo "<div class='wrong_log'>Votre nouvelle adresse mail n'a pas été validée, veuillez consulter votre boîte mail pour activer votre nouvelle adresse mail.</div>";

@@ -40,6 +40,13 @@ label
 	float: left;
 }
 
+#signaler label{
+	font-family: "Arial Rounded MT Bold";
+	display: block;
+	width: 75px;
+	float: left;
+}
+
 #titre{
 	font-variant: small-caps;
 	margin-left: 200px;
@@ -139,4 +146,58 @@ a{
 
 table, th, td {
    border: 1px solid black;
+}
+
+#Administration a:hover{
+	color:black;
+	text-decoration: none;
+}
+#Administration li{
+	display: inline;
+	margin-right: 15px;
+}
+
+#wikis ul{
+	list-style-type:circle;
+}
+
+#wikis a:hover{
+	text-decoration: none;
+	display: inline;
+}
+
+.changeBack{
+	background-color: #6699FF;
+	margin-right: 45%;
+}
+
+.changeBack2{
+	background-color: #ADD8E6;
+	margin-right: 45%;
+}
+
+.titreSujet{
+	font-style: bold;
+	font-size: 20px;
+	display: inline;
+}
+
+.keyword a{
+	color: red;
+	display: inline;
+	
+}
+
+.keywordOK a{
+	color: blue;
+	
+}
+
+.text_trad{
+
+    border-style: ridge;
+    border-width: 5px;
+    border-color: #0033CC;
+    padding: 5px;
+
 }
